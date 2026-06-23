@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { teacherApi } from "../api/client";
 import type { TeacherAuth } from "../types";
@@ -206,8 +206,6 @@ function ApplyTeacherForm() {
   const [idCardFront, setIdCardFront] = useState("");
   const [idCardBack, setIdCardBack] = useState("");
   const [step, setStep] = useState(1);
-  const frontRef = useRef<HTMLInputElement>(null);
-  const backRef = useRef<HTMLInputElement>(null);
 
   function handleFile(file: File | undefined, type: "front" | "back") {
     if (!file || !file.type.startsWith("image/")) { alert("请选择图片文件"); return; }
@@ -218,6 +216,12 @@ function ApplyTeacherForm() {
       else setIdCardBack(data);
     };
     reader.readAsDataURL(file);
+  }
+
+  function handleUrl(url: string, type: "front" | "back") {
+    if (!url.startsWith("http")) return;
+    if (type === "front") setIdCardFront(url);
+    else setIdCardBack(url);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -245,6 +249,29 @@ function ApplyTeacherForm() {
     );
   }
 
+  function UploadBox({ label, type, image }: { label: string; type: "front" | "back"; image: string }) {
+    return (
+      <div>
+        <div className="relative aspect-[1.6] rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-sm overflow-hidden bg-gray-50 hover:border-primary-300 transition-colors">
+          {image ? (
+            <img src={image} alt={label} className="w-full h-full object-cover" />
+          ) : (
+            <div className="text-center pointer-events-none">
+              <div className="text-2xl mb-1">📷</div>
+              <span>点击选择图片</span>
+            </div>
+          )}
+          <input type="file" accept="image/*"
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            onChange={(e) => handleFile(e.target.files?.[0], type)} />
+        </div>
+        <input type="text" value={image} placeholder="或粘贴图片链接"
+          className="w-full mt-1.5 text-xs border border-gray-200 rounded-lg px-2 py-1.5 text-gray-500 outline-none focus:border-primary-300"
+          onChange={(e) => handleUrl(e.target.value, type)} />
+      </div>
+    );
+  }
+
   return (
     <div className="card p-6">
       <h3 className="font-medium mb-4">认证为音乐主理人</h3>
@@ -262,37 +289,9 @@ function ApplyTeacherForm() {
         <div>
           <label className="block text-xs text-gray-500 mb-1">身份证照片（正反面）</label>
           <div className="grid grid-cols-2 gap-3">
-            <div
-              onClick={() => frontRef.current?.click()}
-              className="aspect-[1.6] rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-sm cursor-pointer hover:border-primary-300 transition-colors overflow-hidden bg-gray-50"
-            >
-              {idCardFront ? (
-                <img src={idCardFront} alt="身份证正面" className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-center">
-                  <div className="text-2xl mb-1">📷</div>
-                  <span>点击上传正面</span>
-                </div>
-              )}
-            </div>
-            <div
-              onClick={() => backRef.current?.click()}
-              className="aspect-[1.6] rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-sm cursor-pointer hover:border-primary-300 transition-colors overflow-hidden bg-gray-50"
-            >
-              {idCardBack ? (
-                <img src={idCardBack} alt="身份证反面" className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-center">
-                  <div className="text-2xl mb-1">📷</div>
-                  <span>点击上传反面</span>
-                </div>
-              )}
-            </div>
+            <UploadBox label="身份证正面" type="front" image={idCardFront} />
+            <UploadBox label="身份证反面" type="back" image={idCardBack} />
           </div>
-          <input ref={frontRef} type="file" accept="image/*" className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0], "front")} />
-          <input ref={backRef} type="file" accept="image/*" className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0], "back")} />
           <p className="text-xs text-gray-400 mt-1">仅用于身份核验，信息加密存储</p>
         </div>
         <button type="submit" className="btn-primary w-full text-sm">提交认证</button>
