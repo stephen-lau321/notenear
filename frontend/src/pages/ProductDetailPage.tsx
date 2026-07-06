@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { productApi, orderApi } from "../api/client";
 import type { Product } from "../types";
@@ -21,7 +21,7 @@ export default function ProductDetailPage() {
     if (!token) { setMsg("请先登录"); return; }
     if (!product) return;
     orderApi.create({ productId: product.id, quantity: 1 })
-      .then(() => setMsg("下单成功！老师会尽快联系你"))
+      .then(() => setMsg("下单成功！体验导师会尽快联系你"))
       .catch((e: any) => setMsg(e?.message || "下单失败"));
   }
 

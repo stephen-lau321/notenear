@@ -4,6 +4,7 @@
   Post,
   Body,
   Param,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
@@ -19,7 +20,7 @@ export class ActivityController {
   @Post()
   @UseGuards(AuthGuard("jwt"))
   @ApiBearerAuth()
-  @ApiOperation({ summary: "发布活动" })
+  @ApiOperation({ summary: "发布活动（管理员可设置 autoApprove 直接通过）" })
   create(
     @CurrentUser("id") userId: string,
     @Body() data: {
@@ -29,15 +30,27 @@ export class ActivityController {
       eventTime?: string;
       location?: string;
       price?: number;
+      autoApprove?: boolean;
     }
   ) {
-    return this.activityService.create(userId, data);
+    return this.activityService.create(userId, data, data.autoApprove);
   }
 
   @Get("teacher/:teacherId")
-  @ApiOperation({ summary: "查看老师的所有活动" })
-  listByTeacher(@Param("teacherId") teacherId: string) {
-    return this.activityService.listByTeacher(teacherId);
+  @ApiOperation({ summary: "查看老师的所有活动（公开仅已审核）" })
+  listByTeacher(
+    @Param("teacherId") teacherId: string,
+    @Query("all") all?: string
+  ) {
+    return this.activityService.listByTeacher(teacherId, all === "1");
+  }
+
+  @Get("my")
+  @UseGuards(AuthGuard("jwt"))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "查看自己的所有活动（含待审核）" })
+  listMyActivities(@CurrentUser("id") userId: string) {
+    return this.activityService.listByTeacher(userId, true);
   }
 
   @Get(":id")

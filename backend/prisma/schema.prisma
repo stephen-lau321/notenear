@@ -4,15 +4,32 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 model User {
   id           String   @id @default(cuid())
   nickname     String?
   avatar       String?
+  email         String?  @unique
+  passwordHash  String?  @map("password_hash")
   phone        String?  @unique
-  wechatOpenId String?  @unique @map("wechat_openid")
+  wechatOpenId   String?  @unique @map("wechat_openid")
+  residentialArea String? @map("residential_area")
+  studentName     String? @map("student_name")
+  experienceLevel String? @map("experience_level")
+  childGender     String?  @map("child_gender")
+  childAge        String?  @map("child_age")
+  childGrade      String?  @map("child_grade")
+  experienceType   String?  @map("experience_type")
+  experienceSubjects String? @map("experience_subjects")
+  idCardNo        String?  @map("id_card_no")
+  selfGender      String?  @map("self_gender")
+  selfExperienceYears String? @map("self_experience_years")
+  age             Int?
+  school          String?
+  experienceFormat String? @map("experience_format")
+  points          Int      @default(0)
   role         String   @default("PARENT")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
@@ -24,6 +41,11 @@ model User {
   parentContacts  ContactLog[] @relation("parent_contacts")
   teacherContacts ContactLog[] @relation("teacher_contacts")
   buyerOrders     Order[]
+  phoneUnlocks    PhoneUnlock[] @relation("phone_unlocks_user")
+  unlockedPhones  PhoneUnlock[] @relation("phone_unlocks_target")
+  reviews         Review[]
+  favorites       Favorite[]
+  notifications   Notification[]
 
   @@map("users")
 }
@@ -34,7 +56,20 @@ model TeacherAuth {
   realName    String    @map("real_name")
   idCardFront String?   @map("id_card_front")
   idCardBack  String?   @map("id_card_back")
-  idCardNo    String?   @map("id_card_no")
+  idCardNo      String?   @unique @map("id_card_no")
+  gender        String?
+  graduationSchool String? @map("graduation_school")
+  highestDegree  String? @map("highest_degree")
+  major         String?
+  experienceYears String? @map("experience_years")
+  experienceItems String? @map("experience_items")
+  graduationCert  String? @map("graduation_cert")
+  teacherCert     String? @map("teacher_cert")
+  teacherType  String   @default("TEACHER") @map("teacher_type")
+  services     String?  // JSON array for 艺术链接者 services
+  isBackupTeacher Boolean @default(false) @map("is_backup_teacher")
+  isStudent     Boolean  @default(false) @map("is_student")
+  lastActiveAt DateTime? @map("last_active_at")
   status      String    @default("PENDING")
   verifiedAt  DateTime? @map("verified_at")
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -43,6 +78,7 @@ model TeacherAuth {
   user         User          @relation(fields: [userId], references: [id])
   streetClaims StreetClaim[]
   products     Product[]
+  matchRecords MatchRecord[]
 
   @@map("teacher_auths")
 }
@@ -50,6 +86,7 @@ model TeacherAuth {
 model Instrument {
   id        String   @id @default(cuid())
   name      String
+  category  String?
   createdAt DateTime @default(now()) @map("created_at")
 
   claims   StreetClaim[]
@@ -63,6 +100,7 @@ model StreetClaim {
   teacherId    String    @map("teacher_id")
   instrumentId String    @map("instrument_id")
   streetName   String    @map("street_name")
+  communityName String?  @map("community_name")
   streetRaw    String?   @map("street_raw")
   district     String?
   city         String?
@@ -70,13 +108,21 @@ model StreetClaim {
   lat          Float?
   lng          Float?
   status       String    @default("ACTIVE")
+  releaseRequested Boolean @default(false) @map("release_requested")
+  modifyData   String?   @map("modify_data")
+  modifyStatus String?   @map("modify_status")
+  modifyCount  Int       @default(0) @map("modify_count")
+  lastModifyYear Int?    @map("last_modify_year")
   createdAt    DateTime  @default(now()) @map("created_at")
   releasedAt   DateTime? @map("released_at")
 
-  teacher    TeacherAuth @relation(fields: [teacherId], references: [id])
-  instrument Instrument  @relation(fields: [instrumentId], references: [id])
+  teacher      TeacherAuth @relation(fields: [teacherId], references: [id])
+  instrument   Instrument  @relation(fields: [instrumentId], references: [id])
+  matchRecords MatchRecord[]
+  reviews      Review[]
+  favorites    Favorite[]
 
-  @@unique([streetName, instrumentId])
+  @@unique([communityName, instrumentId])
   @@map("street_claims")
 }
 
@@ -162,7 +208,10 @@ model ContactLog {
   id        String   @id @default(cuid())
   parentId  String   @map("parent_id")
   teacherId String   @map("teacher_id")
-  fee       Int
+  message   String?
+  reply     String?
+  repliedAt DateTime? @map("replied_at")
+  fee       Int      @default(0)
   status    String   @default("PENDING")
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -170,4 +219,146 @@ model ContactLog {
   teacher User @relation("teacher_contacts", fields: [teacherId], references: [id])
 
   @@map("contact_logs")
+}
+
+model PhoneUnlock {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  targetUserId String   @map("target_user_id")
+  method       String   // "ID_CARD" | "POINTS"
+  pointsCost   Int      @default(0) @map("points_cost")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user       User @relation("phone_unlocks_user", fields: [userId], references: [id])
+  targetUser User @relation("phone_unlocks_target", fields: [targetUserId], references: [id])
+
+  @@map("phone_unlocks")
+}
+
+model BackupClaim {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  streetName   String   @map("street_name")
+  instrumentId String   @map("instrument_id")
+  instrumentName String?
+  status       String   @default("WAITING")
+  createdAt    DateTime @default(now()) @map("created_at")
+  activatedAt  DateTime? @map("activated_at")
+
+  @@map("backup_claims")
+}
+
+// ============================================================
+// V2 新增模型：生源采集 + AI评分 + 匹配引擎 + 评价 + 收藏 + 通知
+// ============================================================
+
+model StudentDemand {
+  id             String   @id @default(cuid())
+  source         String   @default("XHS")   // XHS | MANUAL | WECHAT | WEB
+  sourceUrl      String?  @map("source_url")
+  content        String                     // 原始帖子内容
+  instrument     String?                    // 检测到的乐器
+  city           String?
+  district       String?
+  street         String?
+  budget         Int?
+  postTimeText   String?  @map("post_time_text")
+  hoursAgo       Float?   @map("hours_ago")
+  commentCount   Int      @default(0) @map("comment_count")
+  accountSignals String?  @map("account_signals")  // JSON
+  rawData        String?  @map("raw_data")         // JSON
+  status         String   @default("NEW")  // NEW | SCORED | MATCHED | IGNORED
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  scores  ScoreHistory[]
+  matches MatchRecord[]
+
+  @@map("student_demands")
+}
+
+model ScoreHistory {
+  id           String   @id @default(cuid())
+  demandId     String   @map("demand_id")
+  totalScore   Float    @map("total_score")
+  grade        String                    // HIGH | MEDIUM | LOW
+  timeliness   Float
+  completeness Float
+  authenticity Float
+  competition  Float
+  budget       Float
+  action       String                    // IMMEDIATE_PUSH | MANUAL_REVIEW | AUTO_FILTER
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  demand StudentDemand @relation(fields: [demandId], references: [id])
+
+  @@map("score_history")
+}
+
+model MatchRecord {
+  id          String   @id @default(cuid())
+  demandId    String   @map("demand_id")
+  claimId     String   @map("claim_id")
+  teacherId   String   @map("teacher_id")
+  score       Float                          // 综合匹配分
+  distanceKm  Float?   @map("distance_km")
+  status      String   @default("PENDING")   // PENDING | NOTIFIED | ACCEPTED | DECLINED
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  demand  StudentDemand @relation(fields: [demandId], references: [id])
+  claim   StreetClaim   @relation(fields: [claimId], references: [id])
+  teacher TeacherAuth   @relation(fields: [teacherId], references: [id])
+
+  @@map("match_records")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  authorId  String   @map("author_id")
+  claimId   String   @map("claim_id")
+  rating    Int                             // 1-5 星
+  content   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  author User        @relation(fields: [authorId], references: [id])
+  claim  StreetClaim @relation(fields: [claimId], references: [id])
+
+  @@map("reviews")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  claimId   String   @map("claim_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User        @relation(fields: [userId], references: [id])
+  claim StreetClaim @relation(fields: [claimId], references: [id])
+
+  @@unique([userId, claimId])
+  @@map("favorites")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String                          // NEW_MATCH | NEW_MESSAGE | REVIEW_ADDED | SYSTEM
+  title     String
+  body      String?
+  data      String?                         // JSON: related IDs
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model OverflowLog {
+  id              String   @id @default(cuid())
+  demandId        String   @map("demand_id")
+  originalClaimId String   @map("original_claim_id")
+  reason          String                    // CAPACITY_FULL | PROXIMITY_EXCEEDED
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("overflow_logs")
 }

@@ -7,6 +7,14 @@ export interface User {
   avatar: string | null;
   phone: string | null;
   role: UserRole;
+  residentialArea?: string | null;
+  studentName?: string | null;
+  experienceLevel?: string | null;
+  childGender?: string | null;
+  childAge?: string | null;
+  childGrade?: string | null;
+  experienceType?: string | null;
+  experienceSubjects?: string | null;
   createdAt: string;
 }
 
@@ -14,9 +22,16 @@ export interface User {
 export type TeacherAuthStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface TeacherAuth {
+  teacherType?: string;
   id: string;
   userId: string;
   realName: string;
+  gender?: string | null;
+  graduationSchool?: string | null;
+  major?: string | null;
+  experienceYears?: string | null;
+  experienceItems?: string | null;
+  isStudent?: boolean;
   status: TeacherAuthStatus;
   streetClaims: StreetClaim[];
 }
@@ -36,6 +51,7 @@ export interface StreetClaim {
   instrumentId: string;
   instrument: Instrument;
   streetName: string;
+  communityName?: string | null;
   streetRaw: string | null;
   district: string | null;
   city: string | null;
@@ -44,6 +60,14 @@ export interface StreetClaim {
   lng: number | null;
   status: ClaimStatus;
   teacher?: {
+    realName?: string;
+    gender?: string | null;
+    graduationSchool?: string | null;
+    major?: string | null;
+    experienceYears?: string | null;
+    experienceItems?: string | null;
+    isStudent?: boolean;
+    status?: string;
     user: {
       id: string;
       nickname: string | null;

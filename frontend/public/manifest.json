@@ -2,12 +2,12 @@
   "name": "一街一师一乐器",
   "short_name": "街乐",
   "description": "找到身边的音乐社交活动",
-  "start_url": "/",
+  "start_url": "/xtwhttra/",
   "display": "standalone",
   "background_color": "#FAF6F1",
   "theme_color": "#8B5E3C",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/xtwhttra/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" },
+    { "src": "/xtwhttra/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml" }
   ]
 }

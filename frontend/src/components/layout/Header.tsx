@@ -1,49 +1,53 @@
-import { Link } from "react-router-dom";
+﻿import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Header() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const token = localStorage.getItem("access_token");
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isLoggedIn = !!token;
+
+  // Determine if user is an admin based on role
+  const isAdmin = user?.role === "ADMIN";
+  const isTeacher = user?.role === "TEACHER";
+
+  // Hide header on auth page
+  if (location.pathname === "/auth") return null;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-      <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-xl">🎵</span>
-          <span className="font-semibold text-primary-700 text-lg tracking-tight">
-            街乐
-          </span>
-        </Link>
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-50">
+      <div className="max-w-4xl mx-auto px-4 h-12 flex items-center justify-between">
+        {/* Left: Logo / Home */}
+        <button onClick={() => navigate("/")} className="flex items-center gap-2">
+          <span className="text-lg">🎵</span>
+          <span className="text-sm font-bold text-gray-900 hidden sm:inline">乐邻 · 让艺术体验就在咫尺之间</span>
+        </button>
 
-        <nav className="flex items-center gap-2">
-          <Link
-            to="/shop"
-            className="text-gray-500 hover:text-primary-700 transition-colors"
-            title="乐器商城"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
-            </svg>
-          </Link>
-          <Link
-            to="/search"
-            className="text-gray-500 hover:text-primary-700 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </Link>
-
-          {token ? (
-            <Link to="/dashboard" className="btn-primary text-xs px-4 py-2">
-              我的
-            </Link>
-          ) : (
-            <Link to="/auth" className="btn-outline text-xs px-4 py-2">
-              登录
-            </Link>
+        {/* Right: Navigation */}
+        <div className="flex items-center gap-3">
+          {isAdmin && (
+            <button onClick={() => navigate("/admin")}
+              className={`text-xs transition-colors ${location.pathname === "/admin" ? "text-primary-700 font-medium" : "text-gray-400 hover:text-gray-600"}`}>
+              管理后台
+            </button>
           )}
-        </nav>
+          {isLoggedIn ? (
+            <>
+              <span className="text-xs text-gray-400 hidden sm:inline">{user?.nickname || "用户"}</span>
+              <button onClick={() => navigate("/dashboard")}
+                className={`text-xs transition-colors ${location.pathname === "/dashboard" ? "text-primary-700 font-medium" : "text-gray-400 hover:text-gray-600"}`}>
+                {isTeacher ? "我的据点" : "个人中心"}
+              </button>
+            </>
+          ) : (
+            <button onClick={() => navigate("/auth")}
+              className="text-xs text-gray-400 hover:text-primary-600 transition-colors">
+              登录 / 注册
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

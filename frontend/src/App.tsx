@@ -4,9 +4,11 @@ import HomePage from "./pages/HomePage";
 import SearchPage from "./pages/SearchPage";
 import TeacherDetailPage from "./pages/TeacherDetailPage";
 import AuthPage from "./pages/AuthPage";
-import TeacherDashboardPage from "./pages/TeacherDashboardPage";
+import DashboardPage from "./pages/DashboardPage";
 import ShopPage from "./pages/ShopPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
+import AdminPage from "./pages/AdminPage";
+import DemandPage from "./pages/DemandPage";
 
 export default function App() {
   return (
@@ -16,7 +18,9 @@ export default function App() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/teacher/:id" element={<TeacherDetailPage />} />
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/dashboard" element={<TeacherDashboardPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/demands" element={<DemandPage />} />
         <Route path="/shop" element={<ShopPage />} />
         <Route path="/shop/:id" element={<ProductDetailPage />} />
       </Route>

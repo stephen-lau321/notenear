@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { productApi } from "../api/client";
 import type { Product } from "../types";
+import { SkeletonProductGrid } from "../components/common/Skeleton";
+import EmptyState, { EmptyStates } from "../components/common/EmptyState";
 
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -21,28 +23,16 @@ export default function ShopPage() {
     <div className="max-w-2xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">乐器商城</h1>
-          <p className="text-sm text-gray-500 mt-0.5">音乐主理人自营乐器</p>
+          <h1 className="text-xl font-bold text-gray-800">艺术商城</h1>
+          <p className="text-sm text-gray-500 mt-0.5">艺术主理人自营好物</p>
         </div>
         <Link to="/" className="text-xs text-primary-600 underline">回首页</Link>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 gap-4">
-          {[1,2,3,4].map(i => (
-            <div key={i} className="bg-white rounded-xl p-3 animate-pulse">
-              <div className="aspect-square bg-gray-100 rounded-lg mb-2" />
-              <div className="h-4 bg-gray-100 rounded w-3/4 mb-1" />
-              <div className="h-3 bg-gray-100 rounded w-1/2" />
-            </div>
-          ))}
-        </div>
+        <SkeletonProductGrid count={4} />
       ) : products.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <div className="text-3xl mb-3">🎸</div>
-          <p className="text-sm">商城暂无商品</p>
-          <p className="text-xs mt-1">老师可以在后台发布乐器</p>
-        </div>
+        EmptyStates.noProducts
       ) : (
         <div className="grid grid-cols-2 gap-4">
           {products.map((p) => {

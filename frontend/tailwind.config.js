@@ -27,12 +27,20 @@ export default {
       },
       fontFamily: {
         sans: [
+          '"Noto Sans SC"',
+          '"PingFang SC"',
+          '"Source Han Sans SC"',
           "-apple-system",
           "BlinkMacSystemFont",
-          '"PingFang SC"',
-          '"Noto Sans SC"',
+          '"Hiragino Sans GB"',
           "sans-serif",
         ],
+      },
+      fontWeight: {
+        light: 300,
+        normal: 400,
+        medium: 500,
+        bold: 700,
       },
     },
   },

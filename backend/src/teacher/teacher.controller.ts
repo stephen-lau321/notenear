@@ -28,7 +28,17 @@ export class TeacherController {
       realName: string;
       idCardFront?: string;
       idCardBack?: string;
+      idCardNo?: string;
       instrumentNames: string[];
+      gender?: string;
+      graduationSchool?: string;
+      major?: string;
+      experienceYears?: string;
+      teacherType?: string;
+      graduationCert?: string;
+      teacherCert?: string;
+      experienceItems?: string;
+      highestDegree?: string;
     }
   ) {
     return this.teacherService.apply(userId, data);

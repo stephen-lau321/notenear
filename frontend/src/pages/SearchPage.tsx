@@ -2,12 +2,15 @@
 import { useSearchParams } from "react-router-dom";
 import MapView from "../components/common/MapView";
 import TeacherCard from "../components/common/TeacherCard";
+import { SkeletonTeacherList } from "../components/common/Skeleton";
+import EmptyState, { EmptyStates } from "../components/common/EmptyState";
 import { claimApi } from "../api/client";
 import type { StreetClaim } from "../types";
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
+  const [mode, setMode] = useState("offline");
   const [results, setResults] = useState<StreetClaim[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +26,7 @@ export default function SearchPage() {
     if (!q.trim()) return;
     setLoading(true);
     try {
-      const res: any = await claimApi.search(q);
+      const res: any = await claimApi.search(q, undefined, undefined, mode);
       setResults(res?.data || res || []);
     } catch (e) {
       console.error(e);
@@ -36,6 +39,7 @@ export default function SearchPage() {
     e.preventDefault();
     if (query.trim()) {
       setSearchParams({ q: query.trim() });
+    if (mode !== "offline") doSearch(query.trim());
     }
   }
 
@@ -48,7 +52,7 @@ export default function SearchPage() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="搜索街道、乐器或主理人…"
+            placeholder="搜索街道、艺术门类或主理人…"
             className="input-field pl-12"
             autoFocus
           />
@@ -63,25 +67,27 @@ export default function SearchPage() {
       </form>
 
       {/* 地图 */}
+      <div className="flex gap-1 bg-gray-100 rounded-full p-1 mb-4">
+        <button onClick={() => setMode("offline")}
+          className={`flex-1 py-2 text-xs rounded-full transition-all ${mode === "offline" ? "bg-white shadow-sm font-medium text-gray-900" : "text-gray-500"}`}>
+          线下
+        </button>
+        <button onClick={() => setMode("online")}
+          className={`flex-1 py-2 text-xs rounded-full transition-all ${mode === "online" ? "bg-white shadow-sm font-medium text-gray-900" : "text-gray-500"}`}>
+          线上
+        </button>
+        <button onClick={() => setMode("all")}
+          className={`flex-1 py-2 text-xs rounded-full transition-all ${mode === "all" ? "bg-white shadow-sm font-medium text-gray-900" : "text-gray-500"}`}>
+          不限
+        </button>
+      </div>
       <div className="h-48 mb-4 rounded-xl overflow-hidden">
         <MapView className="w-full h-full" />
       </div>
 
       {/* 搜索结果 */}
       {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="card p-4 animate-pulse">
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-full bg-gray-100" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-100 rounded w-2/3" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <SkeletonTeacherList count={3} />
       ) : results.length > 0 ? (
         <div className="space-y-3">
           <p className="text-xs text-gray-400">
@@ -92,15 +98,9 @@ export default function SearchPage() {
           ))}
         </div>
       ) : query ? (
-        <div className="text-center py-12 text-gray-400">
-          <p className="text-lg mb-1">🔍</p>
-          <p className="text-sm">没有找到匹配的结果</p>
-          <p className="text-xs mt-1">试试其他关键词</p>
-        </div>
+        EmptyStates.noResults
       ) : (
-        <div className="text-center py-12 text-gray-400">
-          <p className="text-sm">输入街道名或乐器名开始搜索</p>
-        </div>
+        <EmptyState icon="🔍" title="搜索身边的体验导师" description="输入街道名或艺术门类开始搜索" />
       )}
     </div>
   );

@@ -2,6 +2,8 @@
 import { useNavigate } from "react-router-dom";
 import MapView from "../components/common/MapView";
 import TeacherCard from "../components/common/TeacherCard";
+import { SkeletonTeacherList } from "../components/common/Skeleton";
+import EmptyState from "../components/common/EmptyState";
 import { claimApi } from "../api/client";
 import type { StreetClaim } from "../types";
 
@@ -27,17 +29,18 @@ export default function HomePage() {
 
   async function loadNearby(lat: number, lng: number) {
     try {
-      const res: any = await claimApi.nearby(lat, lng);
+      const res: any = await claimApi.nearby(lat, lng, 3000);
       setNearby(res?.data || res || []);
     } catch (e) {
-      console.error("加载附近老师失败", e);
+      console.error("加载附近体验导师失败", e);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="relative">
+    <>
+      <div className="relative">
       {/* 地图区域 */}
       <div className="h-[55vh] md:h-[65vh]">
         <MapView
@@ -62,45 +65,42 @@ export default function HomePage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
-        搜索街道、乐器或音乐主理人…
+        搜索街道、艺术门类或主理人…
       </button>
 
-      {/* 附近老师列表 */}
+      {/* 附近体验导师列表 */}
       <div className="max-w-2xl mx-auto px-4 -mt-6 relative z-10">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-medium text-gray-500">
             {loading
-              ? "正在寻找附近的音乐据点…"
-              : `附近的音乐主理人 (${nearby.length})`}
+              ? "正在寻找附近 3km 内的艺术据点…"
+              : `附近 3km 内的体验导师 (${nearby.length})`}
           </h2>
         </div>
 
         <div className="space-y-3 pb-8">
-          {loading
-            ? Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="card p-4 animate-pulse">
-                  <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gray-100" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-gray-100 rounded w-2/3" />
-                      <div className="h-3 bg-gray-100 rounded w-1/2" />
-                    </div>
-                  </div>
-                </div>
-              ))
-            : nearby.map((claim) => (
-                <TeacherCard key={claim.id} claim={claim} />
-              ))}
-
-          {!loading && nearby.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
-              <p className="text-lg mb-1">📍</p>
-              <p className="text-sm">附近还没有音乐主理人</p>
-              <p className="text-xs mt-1">成为第一个认领街道的人吧</p>
-            </div>
+          {loading ? (
+            <SkeletonTeacherList count={3} />
+          ) : nearby.length > 0 ? (
+            nearby.map((claim) => (
+              <TeacherCard key={claim.id} claim={claim} />
+            ))
+          ) : (
+            <EmptyState
+              icon="📍"
+              title="附近还没有体验导师"
+              description="成为第一个认领街道的人吧"
+            />
           )}
         </div>
       </div>
     </div>
+
+    {/* Footer — outside the relative container so always visible */}
+    <div className="text-center py-8 px-4 bg-white border-t border-gray-50">
+      <p className="text-xs text-gray-400">严格审核资格，守护社区安全</p>
+      <p className="text-xs text-gray-300 mt-1">杜绝线上教培广告 · 体验完美人生</p>
+    </div>
+    </>
   );
 }

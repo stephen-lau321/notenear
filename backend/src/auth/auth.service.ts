@@ -1,69 +1,68 @@
-import { Injectable, Logger, BadRequestException } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Injectable, BadRequestException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { PrismaService } from "../prisma/prisma.service";
+import * as bcrypt from "bcryptjs";
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
-  private smsCodes = new Map<string, { code: string; expiresAt: number }>();
-  private readonly DEV_UNIVERSAL_CODE = "888888";
-  private readonly DEV_MODE = true;
+  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
-  constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-    private config: ConfigService
-  ) {}
+  /** Register with email + password */
+  async register(email: string, password: string, role?: string) {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new BadRequestException("请输入有效的邮箱地址");
+    if (!password || password.length < 6) throw new BadRequestException("密码至少6位");
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) throw new BadRequestException("该邮箱已注册");
 
-  async wechatLogin(code: string) {
-    return { message: "微信登录待接入" };
-  }
-
-  async sendSmsCode(phone: string) {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    this.smsCodes.set(phone, {
-      code,
-      expiresAt: Date.now() + 5 * 60 * 1000,
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        role: role || "PARENT",
+        points: 1, // welcome points
+      },
     });
-
-    this.logger.log(`========================================`);
-    this.logger.log(` 验证码 [${phone}]: ${code}`);
-    this.logger.log(` 通用码: ${this.DEV_UNIVERSAL_CODE}`);
-    this.logger.log(`========================================`);
-
-    return { message: "验证码已发送（开发模式）" };
+    return { token: this.generateToken(user.id, user.role), user: { id: user.id, email: user.email, role: user.role, points: user.points } };
   }
 
+  /** Login with email + password */
+  async login(email: string, password: string) {
+    if (!email || !password) throw new BadRequestException("请输入邮箱和密码");
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || !user.passwordHash) throw new BadRequestException("邮箱或密码错误");
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) throw new BadRequestException("邮箱或密码错误");
+
+    // Daily login points
+    const today = new Date().toISOString().slice(0, 10);
+    const lastLogin = user.updatedAt?.toISOString().slice(0, 10);
+    if (lastLogin !== today) {
+      await this.prisma.user.update({ where: { id: user.id }, data: { points: { increment: 1 } } });
+    }
+    const updated = await this.prisma.user.findUnique({ where: { id: user.id } });
+    return { token: this.generateToken(user.id, user.role), user: { id: user.id, email: user.email, role: user.role, nickname: user.nickname, phone: user.phone, points: updated!.points } };
+  }
+
+  // Keep phone login for backward compatibility
   async phoneLogin(phone: string, code: string) {
-    if (this.DEV_MODE && code === this.DEV_UNIVERSAL_CODE) {
-      return this.createOrLoginUser(phone);
-    }
-    const stored = this.smsCodes.get(phone);
-    if (!stored) throw new BadRequestException("请先获取验证码");
-    if (Date.now() > stored.expiresAt) {
-      this.smsCodes.delete(phone);
-      throw new BadRequestException("验证码已过期");
-    }
-    if (stored.code !== code) throw new BadRequestException("验证码错误");
-    this.smsCodes.delete(phone);
-    return this.createOrLoginUser(phone);
-  }
-
-  private async createOrLoginUser(phone: string) {
+    if (code !== "888888") throw new BadRequestException("验证码错误");
     let user = await this.prisma.user.findUnique({ where: { phone } });
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: { phone, role: "PARENT" },
-      });
-    }
-    return {
-      token: this.generateToken(user.id, user.role),
-      user: { id: user.id, phone: user.phone, role: user.role, nickname: user.nickname },
-    };
+    if (!user) user = await this.prisma.user.create({ data: { phone, role: "PARENT" } });
+    return { token: this.generateToken(user.id, user.role), user: { id: user.id, phone: user.phone, role: user.role, nickname: user.nickname, points: user.points } };
   }
 
-  generateToken(userId: string, role: string): string {
+  async neighborRegister(data: any) {
+    if (!data.phone || !/^1\d{10}$/.test(data.phone)) throw new BadRequestException("请输入正确的手机号");
+    const area = [data.province, data.city, data.district, data.street, data.community].filter(Boolean).join(" ");
+    let user = await this.prisma.user.findUnique({ where: { phone: data.phone } });
+    const updateData = { residentialArea: area, experienceType: data.experienceType, experienceSubjects: data.experienceSubjects, age: data.age, selfGender: data.selfGender, studentName: data.studentName, childGender: data.childGender, childAge: data.childAge, childGrade: data.childGrade, school: data.school };
+    if (user) { user = await this.prisma.user.update({ where: { phone: data.phone }, data: updateData }); }
+    else { user = await this.prisma.user.create({ data: { ...updateData, phone: data.phone, role: "PARENT", points: 1 } }); }
+    return { token: this.generateToken(user.id, user.role), user: { id: user.id, phone: user.phone, role: user.role, nickname: user.nickname, points: user.points } };
+  }
+
+  private generateToken(userId: string, role: string): string {
     return this.jwtService.sign({ sub: userId, role });
   }
 }

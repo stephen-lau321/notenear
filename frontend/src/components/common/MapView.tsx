@@ -127,7 +127,7 @@ export default function MapView({
 
       {mapStatus === "ready" && markers.length > 0 && (
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs text-gray-600 shadow-sm z-10">
-          {markers.length} 位音乐主理人 nearby
+          {markers.length} 位艺术主理人 nearby
         </div>
       )}
     </div>

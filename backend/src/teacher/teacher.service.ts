@@ -11,7 +11,18 @@ export class TeacherService {
       realName: string;
       idCardFront?: string;
       idCardBack?: string;
+      idCardNo?: string;
       instrumentNames: string[];
+      gender?: string;
+      graduationSchool?: string;
+      major?: string;
+      experienceYears?: string;
+      teacherType?: string;
+      graduationCert?: string;
+      teacherCert?: string;
+      experienceItems?: string;
+      highestDegree?: string;
+      isStudent?: boolean;
     }
   ) {
     const existing = await this.prisma.teacherAuth.findUnique({
@@ -21,10 +32,24 @@ export class TeacherService {
       throw new BadRequestException("您已提交过认证申请");
     }
 
-    // 更新用户角色为老师
+    // 身份证号唯一性检查
+    if (data.idCardNo) {
+      const idCardExists = await this.prisma.teacherAuth.findUnique({
+        where: { idCardNo: data.idCardNo },
+      });
+      if (idCardExists) {
+        throw new BadRequestException(
+          "该身份证号已被其他账号使用。一个身份证号只能认证一个音乐主理人账号。如有疑问请联系管理员。"
+        );
+      }
+    }
+
+    const isStudentFlag = data.isStudent === true;
+
+    // 更新用户角色
     await this.prisma.user.update({
       where: { id: userId },
-      data: { role: "TEACHER" as any },
+      data: { role: data.teacherType === "HOST" ? ("PARENT" as any) : ("TEACHER" as any) },
     });
 
     // 创建认证记录
@@ -34,6 +59,16 @@ export class TeacherService {
         realName: data.realName,
         idCardFront: data.idCardFront,
         idCardBack: data.idCardBack,
+        idCardNo: data.idCardNo,
+        gender: data.gender,
+        graduationSchool: data.graduationSchool,
+        highestDegree: data.highestDegree,
+        major: data.major,
+        experienceYears: isStudentFlag ? "在读" : data.experienceYears,
+        graduationCert: data.graduationCert,
+        teacherCert: data.teacherCert,
+        experienceItems: data.experienceItems,
+        isStudent: isStudentFlag,
       },
     });
 

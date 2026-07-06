@@ -19,7 +19,15 @@ export class UserController {
   @Patch("profile")
   updateProfile(
     @CurrentUser("id") userId: string,
-    @Body() data: { nickname?: string; avatar?: string }
+    @Body() data: {
+      nickname?: string; avatar?: string; residentialArea?: string;
+      phone?: string;
+      studentName?: string; experienceLevel?: string;
+      childGender?: string; childAge?: string; childGrade?: string;
+      experienceType?: string; experienceSubjects?: string;
+      idCardNo?: string; selfGender?: string; selfExperienceYears?: string;
+      age?: number; school?: string; experienceFormat?: string;
+    }
   ) {
     return this.userService.updateProfile(userId, data);
   }
