@@ -73,10 +73,9 @@ Render 自动通过 `render.yaml` 配置部署。也可以手动：
    | 配置项 | 值 |
    |--------|-----|
    | Name | notenear |
-   | Root Directory | `backend` |
    | Runtime | Node |
-   | Build Command | `npm install && npx prisma generate && npx nest build` |
-   | Start Command | `npx prisma db push --accept-data-loss && npx prisma db seed && node dist/main.js` |
+   | Build Command | `cd backend && npm install && npx prisma generate && npx nest build` |
+   | Start Command | `cd backend && npx prisma db push --accept-data-loss && npx prisma db seed && node dist/main.js` |
 3. 添加环境变量（见下文）
 4. 创建 PostgreSQL 数据库（Render 会自动根据 render.yaml 创建）
 
