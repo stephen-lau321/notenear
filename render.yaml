@@ -4,9 +4,8 @@
     env: node
     plan: free
     region: singapore
-    rootDir: backend
-    buildCommand: npm install && npx prisma generate && npx nest build
-    startCommand: npx prisma db push --accept-data-loss && npx prisma db seed && node dist/main.js
+    buildCommand: cd backend && npm install && npx prisma generate && npx nest build
+    startCommand: cd backend && npx prisma db push --accept-data-loss && npx prisma db seed && node dist/main.js
     healthCheckPath: /api/v1/products
     envVars:
       - key: JWT_SECRET
