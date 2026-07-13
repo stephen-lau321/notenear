@@ -1,6 +1,6 @@
 ﻿services:
   - type: web
-    name: notenear-api
+    name: notenear-4
     env: node
     plan: free
     region: singapore
@@ -13,16 +13,16 @@
       - key: JWT_EXPIRES_IN
         value: 30d
       - key: CORS_ORIGINS
-        value: https://stephen-lau321.github.io,http://localhost:5173,http://localhost:4173
+        value: https://stephen-lau321.github.io,http://localhost:5173,http://localhost:4173,http://localhost:5181
       - key: AMAP_API_KEY
         value: f1392fa410619aad5a6b18ee6da3c168
       - key: DATABASE_URL
         fromDatabase:
-          name: notenear-db
+          name: notenear3-data
           property: connectionString
 
 databases:
-  - name: notenear-db
+  - name: notenear3-data
     databaseName: streetmusic
     user: streetmusic
     plan: free
