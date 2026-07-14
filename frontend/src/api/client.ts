@@ -27,8 +27,8 @@ apiClient.interceptors.response.use(
       localStorage.removeItem("access_token");
       localStorage.removeItem("user");
       // Redirect to login if not already there
-      if (window.location.pathname !== "/xtwhttra/auth") {
-        window.location.href = "/xtwhttra/auth";
+      if (window.location.pathname !== "/notenear/auth") {
+        window.location.href = "/notenear/auth";
         return;
       }
     }

@@ -805,7 +805,7 @@ function PointsPurchaseModal({ onClose }: { onClose: () => void }) {
 
         {/* QR Code */}
         <div className="flex justify-center mb-4">
-          <img src="/xtwhttra/qr-payment.jpg" alt="收款码" className="w-48 h-48 object-contain border rounded-xl" />
+          <img src="/notenear/qr-payment.jpg" alt="收款码" className="w-48 h-48 object-contain border rounded-xl" />
         </div>
 
         {/* Amount selection */}
